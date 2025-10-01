@@ -35,13 +35,19 @@ def scores():
             team_tag = cells[0].find('a', attrs={'data-testid': 'prism-linkbase'})
             team_name = team_tag.text.strip() if team_tag else cells[0].text.strip()
 
+            # Convert each quarter score to int
+            q1 = int(cells[1].text.strip())
+            q2 = q1 + int(cells[2].text.strip())
+            q3 = q2 + int(cells[3].text.strip())
+            total = int(cells[5].text.strip())
+
             scores[team_name] = {
-                "q1": cells[1].text.strip(),
-                "q2": cells[2].text.strip(),
-                "q3": cells[3].text.strip(),
-                "q4": cells[4].text.strip(),
-                "total": cells[5].text.strip()
+                "q1": str(q1),
+                "q2": str(q2),
+                "q3": str(q3),
+                "final": str(total)
             }
+
 
     return jsonify(scores)
 
