@@ -21,22 +21,27 @@ def scores():
     response = requests.get(url, headers=headers)
     soup = BeautifulSoup(response.text, 'html.parser')
 
-    tables = soup.find_all('table', class_='Table')  # ← line 25
+    # Find the specific table using data-testid
+    table = soup.find('table', attrs={'data-testid': 'prism-Table'})
+    if not table:
+        return jsonify({"error": "Score table not found"}), 404
+
     scores = {}
-    for table in tables:
-        rows = table.find_all('tr')
-        for row in rows:
-            cells = row.find_all('td')
-            if len(cells) >= 5:
-                team = cells[0].text.strip()
-                scores[team] = {
-                    "q1": cells[1].text.strip(),
-                    "q2": cells[2].text.strip(),
-                    "q3": cells[3].text.strip(),
-                    "q4": cells[4].text.strip()
-                }
-        if scores:
-            break
+    rows = table.find_all('tr', attrs={'data-testid': 'prism-TableRow'})
+    for row in rows[1:]:  # skip header row
+        cells = row.find_all('td', attrs={'data-testid': 'prism-TableCell'})
+        if len(cells) >= 6:
+            # Extract team name from the nested <a> tag
+            team_tag = cells[0].find('a', attrs={'data-testid': 'prism-linkbase'})
+            team_name = team_tag.text.strip() if team_tag else cells[0].text.strip()
+
+            scores[team_name] = {
+                "q1": cells[1].text.strip(),
+                "q2": cells[2].text.strip(),
+                "q3": cells[3].text.strip(),
+                "q4": cells[4].text.strip(),
+                "total": cells[5].text.strip()
+            }
 
     return jsonify(scores)
 
