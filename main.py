@@ -15,14 +15,13 @@ def scores():
         return jsonify({"error": "Missing game_id"}), 400
 
     url = f"https://www.espn.com/nfl/boxscore/_/gameId/{game_id}"
-headers = {
-    "User-Agent": "Mozilla/5.0"
-}
-response = requests.get(url, headers=headers)
-soup = BeautifulSoup(response.text, 'html.parser')
+    headers = {
+        "User-Agent": "Mozilla/5.0"
+    }
+    response = requests.get(url, headers=headers)
+    soup = BeautifulSoup(response.text, 'html.parser')
 
-
-    tables = soup.find_all('table', class_='Table')
+    tables = soup.find_all('table', class_='Table')  # ← line 25
     scores = {}
     for table in tables:
         rows = table.find_all('tr')
@@ -40,3 +39,4 @@ soup = BeautifulSoup(response.text, 'html.parser')
             break
 
     return jsonify(scores)
+
