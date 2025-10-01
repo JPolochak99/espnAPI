@@ -21,33 +21,34 @@ def scores():
     response = requests.get(url, headers=headers)
     soup = BeautifulSoup(response.text, 'html.parser')
 
-    # Find the specific table using data-testid
     table = soup.find('table', attrs={'data-testid': 'prism-Table'})
     if not table:
         return jsonify({"error": "Score table not found"}), 404
 
-    scores = {}
     rows = table.find_all('tr', attrs={'data-testid': 'prism-TableRow'})
-    for row in rows[1:]:  # skip header row
-        cells = row.find_all('td', attrs={'data-testid': 'prism-TableCell'})
-        if len(cells) >= 6:
-            # Extract team name from the nested <a> tag
-            team_tag = cells[0].find('a', attrs={'data-testid': 'prism-linkbase'})
-            team_name = team_tag.text.strip() if team_tag else cells[0].text.strip()
+    if len(rows) < 3:
+        return jsonify({"error": "Insufficient score data"}), 500
 
-            # Convert each quarter score to int
-            q1 = int(cells[1].text.strip())
-            q2 = q1 + int(cells[2].text.strip())
-            q3 = q2 + int(cells[3].text.strip())
-            total = int(cells[5].text.strip())
+    # Parse away team (first row)
+    away_cells = rows[1].find_all('td', attrs={'data-testid': 'prism-TableCell'})
+    away_q1 = int(away_cells[1].text.strip())% 10
+    away_q2 = away_q1 + int(away_cells[2].text.strip())% 10
+    away_q3 = away_q2 + int(away_cells[3].text.strip())% 10
+    away_final = int(away_cells[5].text.strip())% 10
 
-            scores[team_name] = {
-                "q1": str(q1),
-                "q2": str(q2),
-                "q3": str(q3),
-                "final": str(total)
-            }
+    # Parse home team (second row)
+    home_cells = rows[2].find_all('td', attrs={'data-testid': 'prism-TableCell'})
+    home_q1 = int(home_cells[1].text.strip()) % 10
+    home_q2 = home_q1 + int(home_cells[2].text.strip()) % 10
+    home_q3 = home_q2 + int(home_cells[3].text.strip()) % 10
+    home_final = int(home_cells[5].text.strip()) % 10
 
+    # Return flat structure for JS
+    return jsonify({
+        "q1": f"{home_q1}{away_q1}",
+        "q2": f"{home_q2}{away_q2}",
+        "q3": f"{home_q3}{away_q3}",
+        "final": f"{home_final}{away_final}"
+    })
 
-    return jsonify(scores)
 
