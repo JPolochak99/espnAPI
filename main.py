@@ -29,7 +29,11 @@ def scores():
     if len(rows) < 3:
         return jsonify({"error": "Insufficient score data"}), 500
 
-    # Parse away team (first row)
+    # Define away and home cells directly
+    away_cells = rows[1].find_all('td', attrs={'data-testid': 'prism-TableCell'})
+    home_cells = rows[2].find_all('td', attrs={'data-testid': 'prism-TableCell'})
+
+    # Parse full scores first
     away_q1 = int(away_cells[1].text.strip())
     away_q2 = away_q1 + int(away_cells[2].text.strip())
     away_q3 = away_q2 + int(away_cells[3].text.strip())
@@ -40,12 +44,11 @@ def scores():
     home_q3 = home_q2 + int(home_cells[3].text.strip())
     home_final = int(home_cells[5].text.strip())
 
-    # Now take last digit
+    # Return last digits only
     return jsonify({
         "q1": f"{home_q1 % 10}{away_q1 % 10}",
         "q2": f"{home_q2 % 10}{away_q2 % 10}",
         "q3": f"{home_q3 % 10}{away_q3 % 10}",
         "final": f"{home_final % 10}{away_final % 10}"
-})
-
+    })
 
